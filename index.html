@@ -83,7 +83,14 @@ tr:hover td{background:#f8f9ff}
 .law-link:hover{text-decoration:underline;color:#0c447c}
 .dt{font-size:11.5px;color:var(--text2);font-variant-numeric:tabular-nums;font-family:var(--mono)}
 .pill{display:inline-block;padding:3px 8px;border-radius:10px;font-size:10px;font-weight:600;background:var(--blue-bg);color:var(--blue)}
-.badge-y{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--green-bg);color:var(--green);font-size:11px;font-weight:600}
+.badge-y{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:var(--green-bg);color:var(--green);font-size:11px;font-weight:600;cursor:help}
+.status-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:600;white-space:nowrap;border:none;font-family:var(--font)}
+.status-pill.clickable{cursor:pointer}
+.status-ok{background:var(--green-bg);color:var(--green)}
+.status-partial{background:#fef3c7;color:#92400e}
+.status-bad{background:#fee2e2;color:#991b1b}
+.status-todo{background:#ffedd5;color:#9a3412}
+.status-review{background:var(--blue-bg);color:var(--blue)}
 .no-cell{text-align:center;color:var(--text3);font-size:11px;font-family:var(--mono)}
 .ext-link{color:var(--text3);font-size:13px;text-decoration:none;display:inline-flex;align-items:center}
 .ext-link:hover{color:var(--blue)}
@@ -217,6 +224,11 @@ tr:hover td{background:#f8f9ff}
   <div class="sec-info" id="sec-info">清點日期：115/06/11　｜　修正日期資料截至 115/06/11</div>
   <div class="legend" style="margin-left:auto">
     <span class="lg"><span class="pcode-chip">PCode</span> 點法規名稱前往全國法規資料庫</span>
+    <span class="lg"><span class="status-pill status-ok">符合</span></span>
+    <span class="lg"><span class="status-pill status-partial">部分符合</span></span>
+    <span class="lg"><span class="status-pill status-bad">不符合</span></span>
+    <span class="lg"><span class="status-pill status-todo">待改善</span></span>
+    <span class="lg"><span class="status-pill status-review">待複核</span></span>
   </div>
 </div>
 
@@ -232,6 +244,7 @@ tr:hover td{background:#f8f9ff}
     <th class="sortable" style="width:84px" onclick="sortBy(5)">登錄日期 <span class="sort-icon">↕</span></th>
     <th class="sortable" style="width:84px" onclick="sortBy(6)">清點日期 <span class="sort-icon">↕</span></th>
     <th class="ns" style="width:52px">適用性</th>
+    <th class="ns" style="width:96px">合規狀態</th>
     <th class="ns" style="width:44px">連結</th>
     <th class="ns admin-only" style="width:52px" id="col-edit">編輯</th>
   </tr></thead>
@@ -308,6 +321,20 @@ tr:hover td{background:#f8f9ff}
           <option value="Y">Y（適用）</option>
           <option value="N">N（不適用）</option>
         </select>
+      </div>
+      <div class="edit-field">
+        <label>合規狀態</label>
+        <select id="ef-status">
+          <option value="符合">符合</option>
+          <option value="部分符合">部分符合</option>
+          <option value="不符合">不符合</option>
+          <option value="待改善">待改善</option>
+          <option value="待複核">待複核</option>
+        </select>
+      </div>
+      <div class="edit-field full">
+        <label>適用性判斷理由</label>
+        <input type="text" id="ef-reason" placeholder="說明此法規為何適用 / 不適用">
       </div>
     </div>
     <div class="btn-row">
@@ -468,8 +495,17 @@ function render() {
     });
   }
   document.getElementById('tot').textContent = rows.length;
+  const statusCls = {'符合':'status-ok','部分符合':'status-partial','不符合':'status-bad','待改善':'status-todo','待複核':'status-review'};
   const editCol = isAdmin ? `<th class="ns admin-only" style="width:52px" id="col-edit">編輯</th>` : '';
-  document.getElementById('tb').innerHTML = rows.map((r, i) => `
+  document.getElementById('tb').innerHTML = rows.map((r, i) => {
+    if (!r.status) r.status = '符合';
+    if (!r.reason) r.reason = '';
+    const sc = statusCls[r.status] || 'status-ok';
+    const reasonAttr = r.reason ? ` title="判斷理由：${r.reason.replace(/"/g,'&quot;')}"` : ' title="尚未填寫適用性判斷理由"';
+    const statusCell = isAdmin
+      ? `<button class="status-pill clickable ${sc}" onclick="cycleStatus(${r._idx})" title="點擊切換合規狀態">${r.status}</button>`
+      : `<span class="status-pill ${sc}">${r.status}</span>`;
+    return `
     <tr>
       <td class="no-cell">${i + 1}</td>
       <td><a class="law-link" href="${lawUrl(r.p)}" target="_blank" rel="noopener">${r.n}</a></td>
@@ -478,14 +514,24 @@ function render() {
       <td class="dt"><strong>${r.mod}</strong></td>
       <td class="dt">${r.r}</td>
       <td><span class="pill">${r.c}</span></td>
-      <td style="text-align:center"><span class="badge-y">${r.a}</span></td>
+      <td style="text-align:center"><span class="badge-y"${reasonAttr}>${r.a}</span></td>
+      <td style="text-align:center">${statusCell}</td>
       <td style="text-align:center">
         <a class="ext-link" href="${lawUrl(r.p)}" target="_blank" rel="noopener" title="前往全國法規資料庫">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15,3 21,3 21,9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         </a>
       </td>
       ${isAdmin ? `<td style="text-align:center"><button class="edit-btn" onclick="openEdit(${r._idx})">編輯</button></td>` : ''}
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
+}
+
+const STATUS_CYCLE = ['符合','部分符合','不符合','待改善'];
+function cycleStatus(idx) {
+  const r = DATA[cur].rows[idx];
+  const i = STATUS_CYCLE.indexOf(r.status);
+  r.status = STATUS_CYCLE[(i + 1 + STATUS_CYCLE.length) % STATUS_CYCLE.length] || STATUS_CYCLE[0];
+  render();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -595,7 +641,7 @@ async function doUpdate() {
       const res = await fetch(`${GAS_URL}?pcode=${r.p}`);
       const data = await res.json();
       if (data.mod) {
-        if (data.mod !== r.mod) { r.mod = data.mod; changed++; }
+        if (data.mod !== r.mod) { r.mod = data.mod; r.status = '待複核'; changed++; }
         else unchanged++;
         if (data.pub) r.pub = data.pub;
       } else { failed++; }
@@ -636,6 +682,8 @@ function openEdit(idx) {
   document.getElementById('ef-reg').value = r.r;
   document.getElementById('ef-chk').value = r.c;
   document.getElementById('ef-apply').value = r.a;
+  document.getElementById('ef-status').value = r.status || '符合';
+  document.getElementById('ef-reason').value = r.reason || '';
   document.getElementById('edit-modal').classList.add('show');
 }
 
@@ -649,6 +697,8 @@ function saveEdit() {
   r.r = document.getElementById('ef-reg').value.trim();
   r.c = document.getElementById('ef-chk').value.trim();
   r.a = document.getElementById('ef-apply').value;
+  r.status = document.getElementById('ef-status').value;
+  r.reason = document.getElementById('ef-reason').value.trim();
   closeEdit();
   render();
   toast('✅ 已儲存');
@@ -659,7 +709,7 @@ function closeEdit() {
 }
 
 function addLaw() {
-  const newRow = {n:'新法規名稱',p:'',pub:'',mod:'',r:'115/06/11',c:'115/06/11',a:'Y'};
+  const newRow = {n:'新法規名稱',p:'',pub:'',mod:'',r:'115/06/11',c:'115/06/11',a:'Y',status:'符合',reason:''};
   DATA[cur].rows.push(newRow);
   openEdit(DATA[cur].rows.length - 1);
 }
@@ -670,8 +720,8 @@ function addLaw() {
 function exportCSV() {
   const rows = DATA[cur].rows;
   const lines = [
-    ['編號','法規名稱','PCode','公佈日期','修正日期','登錄日期','清點日期','適用性'].join(','),
-    ...rows.map((r,i) => [i+1, `"${r.n}"`, r.p, r.pub, r.mod, r.r, r.c, r.a].join(','))
+    ['編號','法規名稱','PCode','公佈日期','修正日期','登錄日期','清點日期','適用性','適用性判斷理由','合規狀態'].join(','),
+    ...rows.map((r,i) => [i+1, `"${r.n}"`, r.p, r.pub, r.mod, r.r, r.c, r.a, `"${(r.reason||'').replace(/"/g,'""')}"`, r.status||'符合'].join(','))
   ];
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['\uFEFF'+lines.join('\n')], {type:'text/csv;charset=utf-8'}));
