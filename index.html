@@ -223,7 +223,7 @@ tr:hover td{background:#f8f9ff}
   <div class="sec-title">📄 法規鑑定清單 <span class="sbadge" id="sbadge">類別：職業安全衛生</span></div>
   <div class="sec-info" id="sec-info">清點日期：115/06/11　｜　修正日期資料截至 115/06/11</div>
   <div class="legend" style="margin-left:auto">
-    <span class="lg"><span class="pcode-chip">PCode</span> 點法規名稱前往全國法規資料庫</span>
+    <span class="lg">點法規名稱前往全國法規資料庫</span>
     <span class="lg"><span class="status-pill status-ok">符合</span></span>
     <span class="lg"><span class="status-pill status-partial">部分符合</span></span>
     <span class="lg"><span class="status-pill status-bad">不符合</span></span>
@@ -238,11 +238,10 @@ tr:hover td{background:#f8f9ff}
   <thead><tr>
     <th class="ns" style="width:44px">編號</th>
     <th class="sortable" style="width:auto" onclick="sortBy(1)">法規名稱 <span class="sort-icon">↕</span></th>
-    <th class="ns" style="width:96px">PCode</th>
-    <th class="sortable" style="width:88px" onclick="sortBy(3)">公佈日期 <span class="sort-icon">↕</span></th>
-    <th class="sortable" style="width:94px" onclick="sortBy(4)">修正日期 <span class="sort-icon">↕</span></th>
-    <th class="sortable" style="width:84px" onclick="sortBy(5)">登錄日期 <span class="sort-icon">↕</span></th>
-    <th class="sortable" style="width:84px" onclick="sortBy(6)">清點日期 <span class="sort-icon">↕</span></th>
+    <th class="sortable" style="width:88px" onclick="sortBy(2)">公佈日期 <span class="sort-icon">↕</span></th>
+    <th class="sortable" style="width:94px" onclick="sortBy(3)">修正日期 <span class="sort-icon">↕</span></th>
+    <th class="sortable" style="width:84px" onclick="sortBy(4)">登錄日期 <span class="sort-icon">↕</span></th>
+    <th class="sortable" style="width:84px" onclick="sortBy(5)">清點日期 <span class="sort-icon">↕</span></th>
     <th class="ns" style="width:52px">適用性</th>
     <th class="ns" style="width:96px">合規狀態</th>
     <th class="ns" style="width:44px">連結</th>
@@ -487,7 +486,7 @@ function render() {
     return (!q || r.n.includes(q)) && (!af || r.a === af);
   });
   if (scol >= 0) {
-    const keys = [null,'n','p',null,'pub','mod','r','c','a'];
+    const keys = [null,'n','pub','mod','r','c','a'];
     const k = keys[scol];
     if (k) rows.sort((a,b) => {
       const v = String(a[k]||'').localeCompare(String(b[k]||''), 'zh-Hant');
@@ -509,7 +508,6 @@ function render() {
     <tr>
       <td class="no-cell">${i + 1}</td>
       <td><a class="law-link" href="${lawUrl(r.p)}" target="_blank" rel="noopener">${r.n}</a></td>
-      <td><span class="pcode-chip">${r.p}</span></td>
       <td class="dt">${r.pub}</td>
       <td class="dt"><strong>${r.mod}</strong></td>
       <td class="dt">${r.r}</td>
